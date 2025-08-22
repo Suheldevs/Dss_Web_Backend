@@ -17,7 +17,6 @@ import fs from "fs";
 import path from "path";
 
  const Upload = (folderName = "temp") => {
-  console.log(folderName)
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       const uploadPath = path.join("public", folderName);

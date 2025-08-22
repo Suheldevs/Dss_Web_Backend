@@ -24,4 +24,4 @@ const capitalizeWords = (str) => {
   if (!str) return str;
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
 };
-export {ApiError}
+export default  ApiError
