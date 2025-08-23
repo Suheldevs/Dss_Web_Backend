@@ -1,26 +1,25 @@
 import express from "express";
 import { requireBody } from "../middlewares/validateBody.middleware.js";
-import { Blog } from "../models/blog.model.js";
 import Upload from "../middlewares/multer.middleware.js";
 import { fileValidator } from "../middlewares/fileValidator.middleware.js";
-import { createBlog, deleteBlogById, getAllBlog, getBlogById, updateBlog } from "../controllers/blog.controller.js";
+import Team from "../models/team.model.js";
+import { createTeam, deleteTeamById, getAllTeam, getTeamById, updateTeam } from "../controllers/team.controller.js";
 const router = express.Router();
-
 
 router.post(
   "/",
-  Upload("blog").single("image"),
+  Upload("Team").single("image"),
   fileValidator({ types: ["image"], maxSizeMB: 1 }),
-  requireBody(Blog),
-  createBlog
+  requireBody(Team),
+  createTeam
 );
 
-router.get("/", getAllBlog)
-router.get("/:id", getBlogById)
-router.delete("/:id", deleteBlogById)
-router.put(":id",Upload("blog").single("image"),
+router.get("/", getAllTeam)
+router.get("/:id", getTeamById)
+router.delete("/:id", deleteTeamById)
+router.put(":id",Upload("Team").single("image"),
   fileValidator({ types: ["image"], maxSizeMB: 1 }),
-  requireBody(Blog), updateBlog)
+  requireBody(Team), updateTeam)
 
 
 

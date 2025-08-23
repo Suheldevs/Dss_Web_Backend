@@ -1,7 +1,7 @@
 import  ApiError  from "../utils/ApiError.js";
 import { isValidEmail } from "../utils/validators.js";
 import { User } from "../models/user.model.js";
-import jwt from "jsonwebtoken";
+
 //user signin
 export const createUser = async (req, res, next) => {
   try {

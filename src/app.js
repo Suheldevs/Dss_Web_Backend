@@ -2,6 +2,7 @@ import express from 'express'
 const app = express()
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import path from 'path'
 import ApiError from './utils/ApiError.js'
 import { responseMiddleware } from './utils/ApiResponse.js'
 app.use(cors({
@@ -19,25 +20,38 @@ app.get('/', (req,res)=>{
     res.send("Server is Running !!")
 })
 
+app.use((req, res, next) => {
+  console.log("➡️ Request:", req.method, req.originalUrl);
+  next();
+});
+
+
+
 
 // user routes
 import userRoutes from './routes/user.route.js'
 app.use('/api/v1/user', userRoutes)
 
-//file test url 
-import fileTestRoutes from './routes/fileTest.routes.js'
-import path from 'path'
-app.use('/file',fileTestRoutes)
-
 //blog routes
-import BlogRouter from './routes/blog.routes.js'
-app.use('/api/v1/blog' , BlogRouter)
+import BlogRoutes from './routes/blog.routes.js'
+app.use('/api/v1/blog' , BlogRoutes)
+
+//product 
+import ProductRoutes from './routes/product.routes.js'
+app.use("/api/v1/products", ProductRoutes)
+
+//product 
+import TeamRoutes from './routes/team.routes.js'
+app.use("/api/v1/products", TeamRoutes)
+
+//product 
+import InquiryRoutes from './routes/inquiry.routes.js'
+app.use("/api/v1/products", InquiryRoutes)
 
 
-
-
-
-
+//news latter
+import NewsLatterRoutes from './routes/newsLatter.routes.js'
+app.use("/api/v1/products", NewsLatterRoutes)
 
 
 
@@ -54,6 +68,7 @@ app.use((err, req, res, next) => {
       success: false,
       message: err.message,
       data: err.data,
+      stack:err.stack,
       timestamp: new Date().toISOString(),
     });
   }
