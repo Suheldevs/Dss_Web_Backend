@@ -42,16 +42,20 @@ app.use("/api/v1/products", ProductRoutes)
 
 //product 
 import TeamRoutes from './routes/team.routes.js'
-app.use("/api/v1/products", TeamRoutes)
+app.use("/api/v1/team", TeamRoutes)
 
 //product 
 import InquiryRoutes from './routes/inquiry.routes.js'
-app.use("/api/v1/products", InquiryRoutes)
+app.use("/api/v1/inquiry", InquiryRoutes)
 
 
 //news latter
 import NewsLatterRoutes from './routes/newsLatter.routes.js'
-app.use("/api/v1/products", NewsLatterRoutes)
+app.use("/api/v1/news-latter", NewsLatterRoutes)
+
+//gallery routes
+import GalleryRoutes from './routes/gallery.routes.js'
+app.use("/api/v1/gallery", GalleryRoutes)
 
 
 
