@@ -18,7 +18,7 @@ router.post(
 router.get("/", getAllBlog)
 router.get("/:id", getBlogById)
 router.delete("/:id", deleteBlogById)
-router.put(":id",Upload("blog").single("image"),
+router.put("/:id",Upload("blog").single("image"),
   fileValidator({ types: ["image"], maxSizeMB: 1 }),
   requireBody(Blog), updateBlog)
 
