@@ -26,7 +26,8 @@ const blogSchema = new mongoose.Schema(
       public_id: { type: String},
     },
     category: {
-      type: [String],
+      type: String,
+      required:true,
     },
     tags: {
       type: [String],

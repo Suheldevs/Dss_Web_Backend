@@ -17,7 +17,7 @@ router.post(
 router.get("/", getAllTeam)
 router.get("/:id", getTeamById)
 router.delete("/:id", deleteTeamById)
-router.put(":id",Upload("Team").single("image"),
+router.put("/:id",Upload("Team").single("image"),
   fileValidator({ types: ["image"], maxSizeMB: 1 }),
   requireBody(Team), updateTeam)
 

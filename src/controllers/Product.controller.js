@@ -99,6 +99,26 @@ export const getProductById = async (req, res, next) => {
   }
 };
 
+//get by slug
+export const getProductBySlug = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const product = await Product.findOne({slug});
+
+    if (!product) {
+      return next(new ApiError(404, "Product not found"));
+    }
+
+    const obj = product.toObject();
+    obj.images = obj.images.map(({ public_id, ...rest }) => rest);
+
+    return res.api(200 , "Project Data fetch successfully", obj)
+  } catch (err) {
+    console.error(err);
+    return next(new ApiError(500, err?.message || "Internal Server Error"));
+  }
+};
+
 
 //get all project
 export const getAllProducts = async (req, res, next) => {
@@ -134,11 +154,10 @@ export const updateProduct = async (req, res, next) => {
       if (req.files) req.files.forEach(file => deleteLocalFile(file.path));
       return next(new ApiError(404, "Product not found"));
     }
-    console.log("Product title", product.title , title)
-    if (product.title === title ) {
-      if (req.files) req.files.forEach(file => deleteLocalFile(file.path));
-      return next(new ApiError(404, "Product Already Existed"));
-    }
+    // if (product.title === title ) {
+    //   if (req.files) req.files.forEach(file => deleteLocalFile(file.path));
+    //   return next(new ApiError(404, "Product Already Existed"));
+    // }
     // If files are uploaded, handle image update
     let result = null;
     if (req.files && req.files.length > 0) {
@@ -220,6 +239,7 @@ export const updateProduct = async (req, res, next) => {
     return next(new ApiError(500, err?.message || "Internal Server Error"));
   }
 };
+
 
 
 //delete Product

@@ -1,138 +1,222 @@
-import  Gallery  from "../models/gallery.model.js";
+import mongoose from "mongoose";
+import Gallery from "../models/gallery.model.js";
 import ApiError from "../utils/ApiError.js";
 import { uploadFiles, deleteFile, deleteLocalFile } from "../utils/cloudinary.js";
 
-// ✅ Create Gallery Item
+// Create Gallery
 export const createGallery = async (req, res, next) => {
+  let uploadedFileId = null;
+  let uploadedFileUrl = null;
+
   try {
-    if (!req.files || req.files.length === 0) {
-      return next(new ApiError(400, "At least one image is required"));
+    if (!req.file) {
+      return next(new ApiError(400, "Image is required"));
     }
 
-    let result;
+    let result = null;
     if (process.env.USE_CLOUDINARY === "true") {
-      result = await uploadFiles(req.files);
-      if (!result.success) {
-        return next(new ApiError(400, "Unable to upload Images"));
+      result = await uploadFiles([req.file]);
+      if (!result.success || !result.files[0].url) {
+        return next(new ApiError(400, "Unable to upload Image"));
       }
     } else {
       result = {
         success: true,
-        files: req.files.map(file => ({
-          url: file.path.replace(/\\/g, "/"),
-          public_url: null,
-          public_id: null,
-        })),
+        files: [
+          {
+            url: req.file?.path?.replace(/\\/g, "/"),
+            public_url: null,
+            public_id: null,
+          },
+        ],
       };
     }
 
+    uploadedFileId = result.files[0].public_id || null;
+    uploadedFileUrl = result.files[0].url || null;
+
     const gallery = new Gallery({
-      image: result.files[0], // single image required
+      image: result.files[0],
       category: req.body.category || null,
       projectName: req.body.projectName || null,
       productName: req.body.productName || null,
     });
 
-    const saved = await gallery.save();
+    const savedGallery = await gallery.save();
 
-    return res.api(res, 201, "Gallery item created successfully", saved);
+    const { public_id, ...imageWithoutId } = savedGallery.image.toObject();
+    const responseData = {
+      ...savedGallery.toObject(),
+      image: imageWithoutId,
+    };
+
+    return res.api(201, "Gallery item created successfully", responseData);
   } catch (err) {
+    if (uploadedFileId) {
+      try {
+        await deleteFile(uploadedFileId);
+      } catch {}
+    }
+    if (uploadedFileUrl) {
+      try {
+        deleteLocalFile(uploadedFileUrl);
+      } catch {}
+    }
     return next(new ApiError(500, err?.message || "Internal Server Error"));
   }
 };
 
-// ✅ Update Gallery Item
+// Update Gallery
 export const updateGallery = async (req, res, next) => {
+  let uploadedFileId = null;
+  let uploadedFileUrl = null;
+
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(new ApiError(400, "Invalid Gallery ID format"));
+    }
+
     const gallery = await Gallery.findById(id);
     if (!gallery) return next(new ApiError(404, "Gallery item not found"));
 
-    let updatedImage = gallery.image;
+    const updateData = {
+      category: req.body.category || gallery.category,
+      projectName: req.body.projectName || gallery.projectName,
+      productName: req.body.productName || gallery.productName,
+    };
 
-    // अगर नई image upload हुई है
-    if (req.files && req.files.length > 0) {
-      if (gallery.image?.public_id) {
-        try {
-          await deleteFile(gallery.image.public_id);
-        } catch (e) {
-          console.error("Image delete failed:", e.message);
-        }
-      }
+    if (req.file) {
+      let result = null;
 
-      let result;
       if (process.env.USE_CLOUDINARY === "true") {
-        result = await uploadFiles(req.files);
-        if (!result.success) {
-          return next(new ApiError(400, "Unable to upload Images"));
+        result = await uploadFiles([req.file]);
+        if (!result.success || !result.files[0].url) {
+          return next(new ApiError(400, "Unable to upload new Image"));
         }
       } else {
         result = {
           success: true,
-          files: req.files.map(file => ({
-            url: file.path.replace(/\\/g, "/"),
-            public_url: null,
-            public_id: null,
-          })),
+          files: [
+            {
+              url: req.file?.path?.replace(/\\/g, "/"),
+              public_url: null,
+              public_id: null,
+            },
+          ],
         };
       }
 
-      updatedImage = result.files[0];
+      uploadedFileId = result.files[0].public_id || null;
+      uploadedFileUrl = result.files[0].url || null;
+
+      updateData.image = result.files[0];
     }
 
-    gallery.image = updatedImage;
-    gallery.category = req.body.category || gallery.category;
-    gallery.projectName = req.body.projectName || gallery.projectName;
-    gallery.productName = req.body.productName || gallery.productName;
+    const updatedGallery = await Gallery.findByIdAndUpdate(id, updateData, { new: true });
 
-    const updated = await gallery.save();
+    if (!updatedGallery) {
+      if (uploadedFileId) await deleteFile(uploadedFileId);
+      if (uploadedFileUrl) deleteLocalFile(uploadedFileUrl);
+      return next(new ApiError(500, "Failed to update Gallery item"));
+    }
 
-    return res.api(res, 200, "Gallery item updated successfully", updated);
+    if (req.file) {
+      if (gallery.image?.public_id) await deleteFile(gallery.image.public_id);
+      if (gallery.image?.url) deleteLocalFile(gallery.image.url);
+    }
+
+    const { public_id, ...imageWithoutId } = updatedGallery.image.toObject();
+    const responseData = {
+      ...updatedGallery.toObject(),
+      image: imageWithoutId,
+    };
+
+    return res.api(200, "Gallery item updated successfully", responseData);
   } catch (err) {
+    if (uploadedFileId) {
+      try {
+        await deleteFile(uploadedFileId);
+      } catch {}
+    }
+    if (uploadedFileUrl) {
+      try {
+        deleteLocalFile(uploadedFileUrl);
+      } catch {}
+    }
     return next(new ApiError(500, err?.message || "Internal Server Error"));
   }
 };
 
-// ✅ Get All Gallery Items
+// Get All
 export const getAllGallery = async (req, res, next) => {
   try {
     const galleries = await Gallery.find().sort({ createdAt: -1 });
-    return res.api(res, 200, "Gallery items fetched successfully", galleries);
+    if (!galleries.length) {
+      return next(new ApiError(404, "No Gallery items found"));
+    }
+
+    const sanitized = galleries.map((g) => {
+      const obj = g.toObject();
+      if (obj.image?.public_id) {
+        const { public_id, ...img } = obj.image;
+        obj.image = img;
+      }
+      return obj;
+    });
+
+    return res.api(200, "Gallery items fetched successfully", sanitized);
   } catch (err) {
     return next(new ApiError(500, err?.message || "Internal Server Error"));
   }
 };
 
-// ✅ Get Gallery Item by ID
+// Get By ID
 export const getGalleryById = async (req, res, next) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(new ApiError(400, "Invalid Gallery ID format"));
+    }
+
     const gallery = await Gallery.findById(id);
     if (!gallery) return next(new ApiError(404, "Gallery item not found"));
-    return res.api(res, 200, "Gallery item fetched successfully", gallery);
+
+    const obj = gallery.toObject();
+    if (obj.image?.public_id) {
+      const { public_id, ...img } = obj.image;
+      obj.image = img;
+    }
+
+    return res.api(200, "Gallery item fetched successfully", obj);
   } catch (err) {
     return next(new ApiError(500, err?.message || "Internal Server Error"));
   }
 };
 
-// ✅ Delete Gallery Item
+// Delete
 export const deleteGallery = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const gallery = await Gallery.findById(id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(new ApiError(400, "Invalid Gallery ID format"));
+    }
+
+    const gallery = await Gallery.findByIdAndDelete(id);
     if (!gallery) return next(new ApiError(404, "Gallery item not found"));
 
     if (gallery.image?.public_id) {
       try {
         await deleteFile(gallery.image.public_id);
-      } catch (e) {
-        console.error("Image delete failed:", e.message);
-      }
+      } catch {}
+    }
+    if (gallery.image?.url) {
+      try {
+        deleteLocalFile(gallery.image.url);
+      } catch {}
     }
 
-    await gallery.deleteOne();
-
-    return res.api(res, 200, "Gallery item deleted successfully", null);
+    return res.api(200, "Gallery item deleted successfully");
   } catch (err) {
     return next(new ApiError(500, err?.message || "Internal Server Error"));
   }

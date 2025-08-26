@@ -39,7 +39,7 @@ app.use('/api/v1/blog' , BlogRoutes)
 
 //product 
 import ProductRoutes from './routes/product.routes.js'
-app.use("/api/v1/products", ProductRoutes)
+app.use("/api/v1/product", ProductRoutes)
 
 //product 
 import TeamRoutes from './routes/team.routes.js'

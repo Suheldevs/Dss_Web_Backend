@@ -150,6 +150,8 @@ export const updateBlog = async (req, res, next) => {
     const updateData = {
       title: req.body.title || blog.title,
       description: req.body.description || blog.description,
+      category: req.body.category || blog.category,
+      tags: req.body.tags || blog.tags,
     };
 
     if (req.file) {
@@ -226,7 +228,7 @@ export const updateBlog = async (req, res, next) => {
         );
       }
     }
-
+console.log(err)
     return next(new ApiError(500, err.message || "Internal Server Error"));
   }
 };
