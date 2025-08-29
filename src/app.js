@@ -7,7 +7,7 @@ import ApiError from './utils/ApiError.js'
 import { responseMiddleware } from './utils/ApiResponse.js'
 app.use(cors({
     // origin:[process.env.CORS_ORIGIN] ,
-    origin:`http://localhost:5173 `,
+    origin:[`http://localhost:5173`, 'http://localhost:5174'],
     credentials:true
 }))
 
@@ -57,6 +57,15 @@ app.use("/api/v1/news-latter", NewsLatterRoutes)
 //gallery routes
 import GalleryRoutes from './routes/gallery.routes.js'
 app.use("/api/v1/gallery", GalleryRoutes)
+
+//Visitor routes
+import VisitorRoutes from './routes/visitor.routes.js'
+app.use("/api/v1/visitor", VisitorRoutes)
+
+
+//Job routes
+import JobRoutes from './routes/job.routes.js'
+app.use("/api/v1/job", JobRoutes)
 
 
 

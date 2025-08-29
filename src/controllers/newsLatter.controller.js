@@ -54,7 +54,8 @@ export const subscribeEmail = async (req, res, next) => {
     if (existing) {
       if (!existing.isActive) {
         existing.isActive = true;
-        await existing.save();
+        const res = await existing.save();
+        console.log(res)
         return res.api(200,  "You have re-subscribed successfully")
       }
       return next(new ApiError(400, "Email is already subscribed"));
@@ -62,7 +63,6 @@ export const subscribeEmail = async (req, res, next) => {
 
     const newSubscriber = new Newsletter({ email });
     await newSubscriber.save();
-
     return res.api(201, "Subscribed successfully", { email: newSubscriber.email })
 
   } catch (error) {
@@ -76,8 +76,51 @@ export const getAllSubscribers = async (req, res, next) => {
   try {
     const subscribers = await Newsletter.find().sort({ createdAt: -1 });
 
+    console.log(subscribers)
     return res.api(200 , "Success Fetch all email" , subscribers)
 
+  } catch (error) {
+    console.error(error);
+    return next(new ApiError(500, error.message || "Internal Server Error"));
+  }
+};
+
+
+export const deleteSubscriber = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const subscriber = await Newsletter.findById(id);
+    if (!subscriber) {
+      return next(new ApiError(404, "Subscriber not found"));
+    }
+
+    await Newsletter.findByIdAndDelete(id);
+
+    return res.api(200, "Subscriber deleted successfully");
+  } catch (error) {
+    console.error(error);
+    return next(new ApiError(500, error.message || "Internal Server Error"));
+  }
+};
+
+export const toggleSubscriberStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const subscriber = await Newsletter.findById(id);
+    if (!subscriber) {
+      return next(new ApiError(404, "Subscriber not found"));
+    }
+
+    subscriber.isActive = !subscriber.isActive;
+    await subscriber.save();
+
+    return res.api(200, "Subscriber status updated", {
+      id: subscriber._id,
+      isActive: subscriber.isActive,
+      email: subscriber.email,
+    });
   } catch (error) {
     console.error(error);
     return next(new ApiError(500, error.message || "Internal Server Error"));
