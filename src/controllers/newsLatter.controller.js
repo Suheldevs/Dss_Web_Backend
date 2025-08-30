@@ -5,13 +5,21 @@ import ApiError from "../utils/ApiError.js";
 
 export const sendBulkEmail = async (req, res, next) => {
   try {
-    const { subject, html } = req.body;
+    const { subject, html , subscriberStatus } = req.body;
 
-    if (!subject || !html) {
-      return next(new ApiError(400, "Subject and  content are required"));
+    if (!subject || !html || !subscriberStatus) {
+      return next(new ApiError(400, "Subject and content are required"));
     }
-
-    const subscribers = await Newsletter.find({ isActive: true }).select("email");
+    let subscribers = [] ;
+    if(subscriberStatus == "active"){
+      subscribers = await Newsletter.find({ isActive: true }).select("email");
+    }
+    if(subscriberStatus == "inactive"){
+      subscribers = await Newsletter.find({ isActive: false }).select("email");
+    }
+    if(subscriberStatus == "all"){
+      subscribers = await Newsletter.find().select("email");
+    }
 
     if (!subscribers.length) {
       return next(new ApiError(404, "No active subscribers found"));

@@ -71,6 +71,11 @@ import JobRoutes from './routes/job.routes.js'
 app.use("/api/v1/job", JobRoutes)
 
 
+//dashboard routes
+import DashboardRoutes from './routes/dashboard.routes.js'
+app.use("/api/v1/dashboard", DashboardRoutes)
+
+
 
 app.use((req, res, next) => {
   next(new ApiError(404, "Route not found"));
