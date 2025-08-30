@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.post(
   "/",
-  Upload("product").array("images", 5),
+  Upload("Inquiry").array("sitePhoto", 5),
   fileValidator({ types: ["image","pdf"], maxSizeMB: 1 }),
   requireBody(Inquiry),
   createInquiry
